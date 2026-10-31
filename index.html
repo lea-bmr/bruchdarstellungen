@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brüche – Wie viel ist eingefärbt?</title>
+  <style>
+    :root{
+      --ink:#242424;
+      --paper:#fffdfa;
+      --panel:#ffffff;
+      --soft:#f4f1eb;
+      --green:#2ea84f;
+      --red:#df4b4b;
+      --blue:#7faef7;
+      --shadow:0 10px 30px rgba(45,40,30,.08);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(255,226,145,.18), transparent 28%),
+        radial-gradient(circle at 85% 85%, rgba(143,208,255,.14), transparent 28%),
+        var(--paper);
+      color:var(--ink);
+      font-family:"Trebuchet MS","Comic Sans MS",system-ui,sans-serif;
+    }
+    button,input{font:inherit}
+    .app{
+      width:min(980px,94vw);
+      margin:0 auto;
+      padding:28px 0 44px;
+    }
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:16px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+    .brand h1{
+      margin:0;
+      font-size:clamp(1.7rem,4vw,2.6rem);
+      letter-spacing:.02em;
+    }
+    .brand p{
+      margin:6px 0 0;
+      color:#666;
+      font-size:1rem;
+    }
+    .score{
+      background:#fff;
+      border:2px solid var(--ink);
+      border-radius:18px;
+      padding:10px 16px;
+      font-weight:800;
+      box-shadow:4px 4px 0 #e9e3d8;
+      white-space:nowrap;
+    }
+    .modes{display:none}
+    .start-screen{padding:32px 24px 40px;text-align:center}
+    .start-screen h2{font-size:clamp(1.6rem,3vw,2.2rem);margin:8px 0}
+    .start-screen p{color:#666;margin:0 0 25px}
+    .start-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin:16px auto 22px;max-width:840px}
+    .start-choice{border:2px solid #252525;border-radius:19px;background:#fff;min-height:178px;padding:18px 12px;cursor:pointer;box-shadow:4px 4px 0 #e7e0d5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px}
+    .start-choice:hover{background:#fff6d8;transform:translateY(-2px)}
+    .start-choice b{font-size:1.1rem}.start-choice span{color:#696969;font-size:.88rem}
+    .start-emoji{font-size:3rem}
+    .game-only{display:none}
+    @media(max-width:650px){.start-options{grid-template-columns:1fr}.start-choice{min-height:110px}}
+    .modes{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin:16px 0 22px;
+    }
+    .mode-btn,.small-btn,.main-btn{
+      border:2px solid var(--ink);
+      background:#fff;
+      color:var(--ink);
+      border-radius:14px;
+      cursor:pointer;
+      font-weight:800;
+      transition:.15s ease;
+    }
+    .mode-btn{
+      padding:10px 14px;
+    }
+    .mode-btn.active{
+      background:#fff0a8;
+      transform:translateY(-1px);
+      box-shadow:3px 3px 0 #ded6c8;
+    }
+    .mode-btn:hover,.small-btn:hover,.main-btn:hover{transform:translateY(-1px)}
+    .progress-wrap{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:16px;
+    }
+    .progress-track{
+      flex:1;
+      height:14px;
+      border:2px solid var(--ink);
+      border-radius:999px;
+      overflow:hidden;
+      background:#fff;
+    }
+    .progress-bar{
+      height:100%;
+      width:10%;
+      background:#9bdc8f;
+      transition:width .25s ease;
+    }
+    .progress-text{
+      font-weight:800;
+      min-width:58px;
+      text-align:right;
+    }
+    .card{
+      background:var(--panel);
+      border:2px solid var(--ink);
+      border-radius:24px;
+      box-shadow:7px 7px 0 #e8e1d6;
+      overflow:hidden;
+    }
+    .card-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      padding:22px 24px 8px;
+    }
+    .task-title{
+      margin:0;
+      font-size:clamp(1.35rem,3vw,2rem);
+    }
+    .difficulty{
+      border:1.7px solid var(--ink);
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:.9rem;
+      font-weight:800;
+      background:#f7f4ee;
+      white-space:nowrap;
+    }
+    .workarea{
+      display:grid;
+      grid-template-columns:minmax(320px,1.15fr) minmax(260px,.85fr);
+      gap:28px;
+      align-items:center;
+      padding:12px 28px 30px;
+    }
+    .shape-box{
+      min-height:360px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#fff;
+      border-radius:18px;
+      padding:10px;
+    }
+    .shape-box svg{
+      width:min(100%,430px);
+      height:auto;
+      max-height:350px;
+      overflow:visible;
+    }
+    .answer-panel{
+      background:#faf8f4;
+      border:2px dashed #b8b1a7;
+      border-radius:20px;
+      padding:22px;
+      text-align:center;
+    }
+    .answer-label{
+      font-weight:800;
+      font-size:1.05rem;
+      margin-bottom:14px;
+    }
+    .fraction{
+      width:112px;
+      margin:0 auto;
+      display:grid;
+      grid-template-rows:64px 4px 64px;
+      gap:7px;
+      align-items:center;
+    }
+    .frac-line{
+      height:4px;
+      background:var(--ink);
+      border-radius:999px;
+    }
+    .frac-input{
+      width:100%;
+      height:64px;
+      border:3px solid #8e8e8e;
+      border-radius:13px;
+      background:#fff;
+      text-align:center;
+      font-size:2rem;
+      font-weight:900;
+      outline:none;
+      transition:.15s ease;
+      -moz-appearance:textfield;
+    }
+    .frac-input::-webkit-outer-spin-button,
+    .frac-input::-webkit-inner-spin-button{
+      -webkit-appearance:none;
+      margin:0;
+    }
+    .frac-input:focus{
+      border-color:#555;
+      box-shadow:0 0 0 4px rgba(127,174,247,.16);
+    }
+    .frac-input.correct{
+      color:var(--green);
+      border-color:var(--green);
+      background:#f1fff4;
+    }
+    .frac-input.wrong{
+      color:var(--red);
+      border-color:var(--red);
+      background:#fff5f5;
+    }
+    .words{
+      min-height:30px;
+      margin-top:14px;
+      font-size:1.15rem;
+      font-weight:900;
+    }
+    .words .placeholder{color:#999}
+    .feedback{
+      min-height:48px;
+      margin:12px auto 2px;
+      max-width:280px;
+      font-weight:800;
+      line-height:1.35;
+    }
+    .feedback.good{color:#237d3c}
+    .feedback.bad{color:#b43939}
+    .buttons{
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:16px;
+    }
+    .main-btn{
+      padding:12px 18px;
+      background:#fff0a8;
+      min-width:150px;
+    }
+    .small-btn{
+      padding:10px 14px;
+      background:#fff;
+    }
+    .next-btn{
+      background:#ccefc8;
+    }
+    .footer-actions{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-top:18px;
+      flex-wrap:wrap;
+    }
+    .hint{
+      color:#777;
+      font-size:.93rem;
+    }
+    .round-end{
+      text-align:center;
+      padding:48px 24px 54px;
+      display:none;
+    }
+    .round-end h2{
+      font-size:2.2rem;
+      margin:0 0 10px;
+    }
+    .big-score{
+      font-size:4rem;
+      font-weight:900;
+      margin:12px 0 22px;
+    }
+    .confetti{
+      font-size:2rem;
+      letter-spacing:.25em;
+      margin-bottom:10px;
+    }
+    @media (max-width:760px){
+      .workarea{grid-template-columns:1fr;padding:6px 18px 24px}
+      .shape-box{min-height:280px}
+      .card-head{padding:18px 18px 6px}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <h1>Brüche entdecken</h1>
+      <p>Schau genau hin und trage den Bruch ein.</p>
+    </div>
+    <div class="score">⭐ Punkte: <span id="score">0</span></div>
+  </div>
+
+  <section class="card start-screen" id="startScreen">
+    <h2>Was möchtest du üben?</h2>
+    <p>Wähle ein Modul. Danach löst du 10 Aufgaben hintereinander.</p>
+    <div class="start-options">
+      <button class="start-choice" data-mode="colored"><div class="start-emoji">🟢</div><b>Was ist eingefärbt?</b><span>Zähle die bunten Teile.</span></button>
+      <button class="start-choice" data-mode="missing"><div class="start-emoji">⬜</div><b>Was fehlt?</b><span>Zähle die weißen Teile.</span></button>
+      <button class="start-choice" data-mode="mixed"><div class="start-emoji">🎲</div><b>Gemischt</b><span>Beide Arten durcheinander.</span></button>
+    </div>
+    <p>In jeder Runde: 3 leichte, 4 mittlere und 3 knifflige Aufgaben.</p>
+  </section>
+
+  <div class="progress-wrap game-only">
+    <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="progress-text" id="progressText">1 / 10</div>
+  </div>
+
+  <section class="card game-only" id="gameCard">
+    <div id="playView">
+      <div class="card-head">
+        <h2 class="task-title" id="taskTitle">Wie viel ist eingefärbt?</h2>
+        <div class="difficulty" id="difficulty">leicht</div>
+      </div>
+
+      <div class="workarea">
+        <div class="shape-box" id="shapeBox" aria-label="Bruchdarstellung"></div>
+
+        <div class="answer-panel">
+          <div class="answer-label">Dein Bruch:</div>
+
+          <div class="fraction" aria-label="Bruch eingeben">
+            <input class="frac-input" id="numerator" type="number" inputmode="numeric" min="0" aria-label="Zähler">
+            <div class="frac-line"></div>
+            <input class="frac-input" id="denominator" type="number" inputmode="numeric" min="1" aria-label="Nenner">
+          </div>
+
+          <div class="words" id="words">
+            <span class="placeholder">___ von ___</span>
+          </div>
+
+          <div class="feedback" id="feedback"></div>
+
+          <div class="buttons">
+            <button class="main-btn" id="checkBtn">Prüfen</button>
+            <button class="main-btn next-btn" id="nextBtn" hidden>Nächste Aufgabe →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="round-end" id="roundEnd">
+      <div class="confetti">★ ✦ ★</div>
+      <h2>Runde geschafft!</h2>
+      <p>Du hast erreicht:</p>
+      <div class="big-score"><span id="finalScore">0</span> / 10</div>
+      <button class="main-btn" id="restartBtn">Neue Runde</button>
+    </div>
+  </section>
+
+  <div class="footer-actions game-only">
+    <div class="hint">Tipp: Mit <b>Enter</b> kannst du prüfen.</div>
+    <button class="small-btn" id="newRoundBtn">⌂ Zur Startseite</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const palette = ['#55c85b','#85aef4','#f6be75','#dba2eb','#8bd9cf','#f5969f','#b9ef69','#f6e78a','#bba69b','#98e6b4','#b7b3f5'];
+  const OUTLINE = '#202020';
+  const TOTAL = 10;
+
+  let selectedMode = 'mixed';
+  let tasks = [];
+  let index = 0;
+  let score = 0;
+  let taskScored = false;
+  let seenTaskSignatures = new Set();
+
+  const $ = s => document.querySelector(s);
+  const scoreEl = $('#score');
+  const taskTitle = $('#taskTitle');
+  const difficultyEl = $('#difficulty');
+  const shapeBox = $('#shapeBox');
+  const numerator = $('#numerator');
+  const denominator = $('#denominator');
+  const words = $('#words');
+  const feedback = $('#feedback');
+  const checkBtn = $('#checkBtn');
+  const nextBtn = $('#nextBtn');
+  const progressBar = $('#progressBar');
+  const progressText = $('#progressText');
+  const playView = $('#playView');
+  const roundEnd = $('#roundEnd');
+  const finalScore = $('#finalScore');
+
+  const rand = arr => arr[Math.floor(Math.random()*arr.length)];
+  const int = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+  const shuffle = arr => {
+    const a=[...arr];
+    for(let i=a.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  };
+
+  function difficultyPlan(){
+    return shuffle([
+      'easy','easy','easy',
+      'medium','medium','medium','medium',
+      'hard','hard','hard'
+    ]);
+  }
+
+  function denomFor(diff){
+    if(diff==='easy') return rand([2,3,4]);
+    if(diff==='medium') return rand([5,6,8]);
+    return rand([9,10,12]);
+  }
+
+  function modeFor(i){
+    if(selectedMode==='colored') return 'colored';
+    if(selectedMode==='missing') return 'missing';
+    // gemischt: genau fünf von jeder Sorte
+    return i < 5 ? 'colored' : 'missing';
+  }
+
+  function makeTask(diff, mode){
+    const n=denomFor(diff);
+    let colored=int(1,n-1);
+    if(n>=8 && Math.random()<.65) colored=int(2,n-2);
+    const shapeChoices=['circle','bar','polygon','grid','burst','flower','cog','ring','diamond','rays','brick','checker'];
+    if(n===4) shapeChoices.push('triangle4','square4');
+    if(n===5) shapeChoices.push('cross5','star5');
+    if(n===6) shapeChoices.push('hex6');
+    if(n===10) shapeChoices.push('star10');
+    const shape=rand(shapeChoices);
+    const start=int(0,n-1);
+    const mask=shuffle(Array.from({length:n},(_,i)=>i)).slice(0,colored);
+    return {diff,mode,n,colored,answerNum:mode==='colored'?colored:n-colored,
+      answerDen:n,color:rand(palette),shape,start,mask,seed:Math.random()};
+  }
+
+  function makeRound(){
+    const diffs = difficultyPlan();
+    let modes;
+    if(selectedMode === 'mixed'){
+      modes = shuffle([
+        'colored','colored','colored','colored','colored',
+        'missing','missing','missing','missing','missing'
+      ]);
+    }else{
+      modes = Array(TOTAL).fill(selectedMode);
+    }
+    seenTaskSignatures=new Set();
+    const usedShapes=new Set();
+    tasks = diffs.map((d,i)=>{
+      let t, attempts=0, signature;
+      do {
+        t=makeTask(d,modes[i]);
+        signature=`${t.shape}:${t.n}:${t.colored}`;
+        attempts++;
+      } while((seenTaskSignatures.has(signature)||usedShapes.has(t.shape))&&attempts<300);
+      seenTaskSignatures.add(signature); usedShapes.add(t.shape);
+      return t;
+    });
+    index=0;
+    score=0;
+    taskScored=false;
+    scoreEl.textContent=score;
+    roundEnd.style.display='none';
+    playView.style.display='block';
+    renderTask();
+    showGame();
+  }
+
+  function diffLabel(d){
+    return d==='easy' ? 'leicht' : d==='medium' ? 'mittel' : 'knobelig';
+  }
+
+  function renderTask(){
+    const t=tasks[index];
+    taskScored=false;
+    numerator.value='';
+    denominator.value='';
+    numerator.className='frac-input';
+    denominator.className='frac-input';
+    feedback.textContent='';
+    feedback.className='feedback';
+    checkBtn.hidden=false;
+    nextBtn.hidden=true;
+    taskTitle.textContent = t.mode==='colored' ? 'Wie viel ist eingefärbt?' : 'Wie viel fehlt?';
+    difficultyEl.textContent=diffLabel(t.diff);
+    progressText.textContent=`${index+1} / ${TOTAL}`;
+    progressBar.style.width=`${((index+1)/TOTAL)*100}%`;
+    updateWords();
+    shapeBox.innerHTML=renderShape(t);
+    numerator.focus();
+  }
+
+  function updateWords(){
+    const a=numerator.value.trim();
+    const b=denominator.value.trim();
+    const av=a===''?'___':a;
+    const bv=b===''?'___':b;
+    words.innerHTML = `<span${(a===''&&b==='')?' class="placeholder"':''}>${av} von ${bv}</span>`;
+  }
+
+  function clearFeedbackOnEdit(inp){
+    inp.classList.remove('correct','wrong');
+    feedback.textContent='';
+    feedback.className='feedback';
+    checkBtn.hidden=false;
+    nextBtn.hidden=true;
+  }
+
+  [numerator,denominator].forEach(inp=>{
+    inp.addEventListener('input',()=>{
+      clearFeedbackOnEdit(inp);
+      updateWords();
+    });
+    inp.addEventListener('keydown',e=>{
+      if(e.key==='Enter') checkAnswer();
+    });
+  });
+
+  function checkAnswer(){
+    const t=tasks[index];
+    const a=Number(numerator.value);
+    const b=Number(denominator.value);
+
+    if(numerator.value==='' || denominator.value===''){
+      feedback.textContent='Trage zuerst Zähler und Nenner ein.';
+      feedback.className='feedback bad';
+      return;
+    }
+
+    const numOK = a===t.answerNum;
+    const denOK = b===t.answerDen;
+    numerator.classList.toggle('correct',numOK);
+    numerator.classList.toggle('wrong',!numOK);
+    denominator.classList.toggle('correct',denOK);
+    denominator.classList.toggle('wrong',!denOK);
+
+    if(numOK && denOK){
+      if(!taskScored){
+        score++;
+        taskScored=true;
+        scoreEl.textContent=score;
+      }
+      feedback.textContent='Richtig! ⭐ Du bekommst einen Punkt.';
+      feedback.className='feedback good';
+      checkBtn.hidden=true;
+      nextBtn.hidden=false;
+      nextBtn.focus();
+    }else{
+      feedback.textContent='Noch nicht ganz. Schau dir die Teile noch einmal genau an.';
+      feedback.className='feedback bad';
+    }
+  }
+
+  function nextTask(){
+    if(index < TOTAL-1){
+      index++;
+      renderTask();
+    }else{
+      playView.style.display='none';
+      roundEnd.style.display='block';
+      finalScore.textContent=score;
+      progressText.textContent=`10 / 10`;
+      progressBar.style.width='100%';
+    }
+  }
+
+  checkBtn.addEventListener('click',checkAnswer);
+  nextBtn.addEventListener('click',nextTask);
+  $('#restartBtn').addEventListener('click',makeRound);
+  function showStart(){
+    $('#startScreen').style.display='block';
+    document.querySelectorAll('.game-only').forEach(el=>el.style.display='none');
+  }
+  function showGame(){
+    $('#startScreen').style.display='none';
+    document.querySelector('.progress-wrap').style.display='flex';
+    $('#gameCard').style.display='block';
+    document.querySelector('.footer-actions').style.display='flex';
+  }
+  $('#newRoundBtn').addEventListener('click',showStart);
+  document.querySelectorAll('.start-choice').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      selectedMode=btn.dataset.mode;
+      makeRound();
+    });
+  });
+
+  function svgWrap(inner, viewBox='0 0 420 330'){
+    return `<svg viewBox="${viewBox}" role="img" aria-label="Bruchbild">${inner}</svg>`;
+  }
+
+  function polar(cx,cy,r,ang){
+    const a=(ang-90)*Math.PI/180;
+    return {x:cx+r*Math.cos(a), y:cy+r*Math.sin(a)};
+  }
+
+  function circleShape(t){
+    const cx=210, cy=165, r=120;
+    let s='';
+    for(let i=0;i<t.n;i++){
+      const a0=360*i/t.n, a1=360*(i+1)/t.n;
+      const p0=polar(cx,cy,r,a0), p1=polar(cx,cy,r,a1);
+      const large=(a1-a0)>180?1:0;
+      const fill=t.mask.includes(i)?t.color:'#fff';
+      s+=`<path d="M ${cx} ${cy} L ${p0.x} ${p0.y} A ${r} ${r} 0 ${large} 1 ${p1.x} ${p1.y} Z" fill="${fill}" stroke="${OUTLINE}" stroke-width="2.3"/>`;
+    }
+    return svgWrap(s);
+  }
+
+  function barShape(t){
+    const w=300,h=96,x=60,y=117;
+    let s='';
+    for(let i=0;i<t.n;i++){
+      const cw=w/t.n;
+      s+=`<rect x="${x+i*cw}" y="${y}" width="${cw}" height="${h}" fill="${t.mask.includes(i)?t.color:'#fff'}" stroke="${OUTLINE}" stroke-width="2.1"/>`;
+    }
+    return svgWrap(s);
+  }
+
+  function polygonShape(t){
+    const n=t.n;
+    const cx=210,cy=165,r=118;
+    const pts=[];
+    for(let i=0;i<n;i++) pts.push(polar(cx,cy,r,360*i/n));
+    let s='';
+    for(let i=0;i<n;i++){
+      const p0=pts[i], p1=pts[(i+1)%n];
+      s+=`<polygon points="${cx},${cy} ${p0.x},${p0.y} ${p1.x},${p1.y}" fill="${t.mask.includes(i)?t.color:'#fff'}" stroke="${OUTLINE}" stroke-width="2.2"/>`;
+    }
+    return svgWrap(s);
+  }
+
+  function radialPolygonShape(t){ return polygonShape(t); }
+
+  function gridDims(n){
+    const options={
+      2:[1,2],3:[1,3],4:[2,2],5:[1,5],6:[2,3],8:[2,4],9:[3,3],10:[2,5],12:[3,4]
+    };
+    return options[n] || [1,n];
+  }
+
+  function gridShape(t){
+    const [rows,cols]=gridDims(t.n);
+    const cell=Math.min(70,260/Math.max(rows,cols));
+    const w=cols*cell,h=rows*cell,x=(420-w)/2,y=(330-h)/2;
+    let s='';
+    let k=0;
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        s+=`<rect x="${x+c*cell}" y="${y+r*cell}" width="${cell}" height="${cell}" fill="${t.mask.includes(k)?t.color:'#fff'}" stroke="${OUTLINE}" stroke-width="2.1"/>`;
+        k++;
+      }
+    }
+    return svgWrap(s);
+  }
+
+  function square4Shape(t){
+    const x=105,y=60,w=210,h=210,cx=210,cy=165;
+    const pts=[[x,y],[x+w,y],[x+w,y+h],[x,y+h]];
+    let s='';
+    for(let i=0;i<4;i++){
+      const a=pts[i], b=pts[(i+1)%4];
+      s+=`<polygon points="${cx},${cy} ${a[0]},${a[1]} ${b[0]},${b[1]}" fill="${t.mask.includes(i)?t.color:'#fff'}" stroke="${OUTLINE}" stroke-width="2.2"/>`;
+    }
+    return svgWrap(s);
+  }
+
+  function triangle4Shape(t){
+    // Vier flächengleiche Teildreiecke durch Verbindung der Seitenmitten.
+    const A=[210,45],B=[80,275],C=[340,275];
+    const AB=[145,160], AC=[275,160], BC=[210,275];
+    const tris=[
+      [A,AB,AC],
+      [AB,B,BC],
+      [AC,BC,C],
+      [AB,BC,AC]
+    ];
+    let s='';
+    tris.forEach((tri,i)=>{
+      s+=`<polygon points="${tri.map(p=>p.join(',')).join(' ')}" fill="${t.mask.includes(i)?t.color:'#fff'}" stroke="${OUTLINE}" stroke-width="2.3"/>`;
+    });
+    return svgWrap(s);
+  }
+
+  function cross5Shape(t){
+    const size=68;
+    const cells=[
+      [176,29],[108,97],[176,97],[244,97],[176,165]
+    ];
+    // zentrierter Kreuzkörper aus fünf gleich großen Quadraten
+    let s='';
+    cells.forEach((p,i)=>{
+      s+=`<rect x="${p[0]}" y="${p[1]}" width="${size}" height="${size}" fill="${t.mask.includes(i)?t.color:'#fff'}" stroke="${OUTLINE}" stroke-width="2.3"/>`;
+    });
+    return svgWrap(s);
+  }
+
+  function hex6Shape(t){
+    const cx=210,cy=165,r=118;
+    let s='';
+    for(let i=0;i<6;i++){
+      const p0=polar(cx,cy,r,60*i);
+      const p1=polar(cx,cy,r,60*(i+1));
+      s+=`<polygon points="${cx},${cy} ${p0.x},${p0.y} ${p1.x},${p1.y}" fill="${t.mask.includes(i)?t.color:'#fff'}" stroke="${OUTLINE}" stroke-width="2.3"/>`;
+    }
+    return svgWrap(s);
+  }
+
+  // Gleich große Sektoren: Jeder Sektor entsteht aus derselben Kontur durch Rotation.
+  function ornamentalShape(t, kind){
+    const n=t.n,cx=210,cy=165,r=119;
+    let s='';
+    for(let i=0;i<n;i++){
+      const a=360*i/n, b=360*(i+1)/n, mid=(a+b)/2;
+      const p0=polar(cx,cy,kind==='cog'?(r*.78):r,a);
+      const p1=polar(cx,cy,kind==='cog'?(r*.78):r,b);
+      const tip=polar(cx,cy,kind==='burst'?r*1.12:kind==='flower'?r*1.08:kind==='rays'?r*.88:r*1.12,mid);
+      let d;
+      if(kind==='flower'){
+        const q0=polar(cx,cy,r*.74,a),q1=polar(cx,cy,r*.74,b);
+        d=`M ${cx} ${cy} L ${q0.x} ${q0.y} Q ${tip.x} ${tip.y} ${q1.x} ${q1.y} Z`;
+      }else if(kind==='ring'){
+        const m0=polar(cx,cy,r*.48,a),m1=polar(cx,cy,r*.48,b);
+        d=`M ${cx} ${cy} L ${p0.x} ${p0.y} A ${r} ${r} 0 0 1 ${p1.x} ${p1.y} L ${m1.x} ${m1.y} L ${m0.x} ${m0.y} Z`;
+      }else{
+        d=`M ${cx} ${cy} L ${p0.x} ${p0.y} L ${tip.x} ${tip.y} L ${p1.x} ${p1.y} Z`;
+      }
+      s+=`<path d="${d}" fill="${t.mask.includes(i)?t.color:'#fff'}" stroke="${OUTLINE}" stroke-width="2.2" stroke-linejoin="round"/>`;
+    }
+    return svgWrap(s);
+  }
+  // Klassischer fünfzackiger Stern, in fünf gleich große Teile geteilt.
+  function star5Shape(t){
+    const n=5,cx=210,cy=165,outer=127,inner=55;
+    const vertices=Array.from({length:10},(_,j)=>polar(cx,cy,j%2===0?outer:inner,j*36));
+    let s='';
+    for(let i=0;i<5;i++){
+      const a=vertices[(2*i+9)%10],b=vertices[2*i],c=vertices[(2*i+1)%10];
+      s+=`<polygon points="${cx},${cy} ${a.x},${a.y} ${b.x},${b.y} ${c.x},${c.y}" fill="${t.mask.includes(i)?t.color:'#fff'}" stroke="${OUTLINE}" stroke-width="2.3"/>`;
+    }
+    return svgWrap(s);
+  }
+  function star10Shape(t){
+    const cx=210,cy=165,r=126,inner=58;
+    const v=Array.from({length:10},(_,j)=>polar(cx,cy,j%2===0?r:inner,j*36));
+    let s='';
+    for(let i=0;i<10;i++){
+      const a=v[i],b=v[(i+1)%10];
+      s+=`<polygon points="${cx},${cy} ${a.x},${a.y} ${b.x},${b.y}" fill="${t.mask.includes(i)?t.color:'#fff'}" stroke="${OUTLINE}" stroke-width="2.3"/>`;
+    }
+    return svgWrap(s);
+  }
+  function diamondShape(t){
+    const cx=210,cy=165,r=130;
+    let s='';
+    for(let i=0;i<t.n;i++){
+      const a=polar(cx,cy,r,360*i/t.n),b=polar(cx,cy,r,360*(i+1)/t.n);
+      s+=`<polygon points="${cx},${cy} ${a.x},${a.y} ${b.x},${b.y}" fill="${t.mask.includes(i)?t.color:'#fff'}" stroke="${OUTLINE}" stroke-width="2.2"/>`;
+    }
+    return svgWrap(s);
+  }
+  function brickShape(t){
+    const n=t.n;
+    const cols=n%3===0?3:n%2===0?2:n;
+    const rows=n/cols, w=280/cols,h=185/rows,x=70,y=(330-185)/2;
+    let s='';
+    for(let i=0;i<n;i++){
+      const row=Math.floor(i/cols),col=i%cols;
+      s+=`<rect x="${x+col*w}" y="${y+row*h}" width="${w}" height="${h}" stroke="${OUTLINE}" stroke-width="2" fill="${t.mask.includes(i)?t.color:'#fff'}"/>`;
+    }
+    return svgWrap(s);
+  }
+  function checkerShape(t){
+    const n=t.n, cols=n%4===0?4:n%3===0?3:n%2===0?2:n,rows=n/cols;
+    const cell=Math.min(65,270/cols,225/rows),w=cols*cell,h=rows*cell,x=(420-w)/2,y=(330-h)/2;
+    let s='';
+    for(let i=0;i<n;i++){
+      const row=Math.floor(i/cols),col=(i%cols+ (row%2===0?0:Math.floor(cols/2)))%cols;
+      s+=`<rect x="${x+col*cell}" y="${y+row*cell}" width="${cell}" height="${cell}" fill="${t.mask.includes(i)?t.color:'#fff'}" stroke="${OUTLINE}" stroke-width="2.1"/>`;
+    }
+    return svgWrap(s);
+  }
+
+  function renderShape(t){
+    switch(t.shape){
+      case 'burst': return ornamentalShape(t,'burst');
+      case 'flower': return ornamentalShape(t,'flower');
+      case 'cog': return ornamentalShape(t,'cog');
+      case 'ring': return ornamentalShape(t,'ring');
+      case 'rays': return ornamentalShape(t,'rays');
+      case 'diamond': return diamondShape(t);
+      case 'brick': return brickShape(t);
+      case 'checker': return checkerShape(t);
+      case 'star5': return star5Shape(t);
+      case 'star10': return star10Shape(t);
+      case 'circle': return circleShape(t);
+      case 'bar': return barShape(t);
+      case 'grid': return gridShape(t);
+      case 'triangle4': return triangle4Shape(t);
+      case 'square4': return square4Shape(t);
+      case 'cross5': return cross5Shape(t);
+      case 'hex6': return hex6Shape(t);
+      case 'radialPolygon': return radialPolygonShape(t);
+      default: return polygonShape(t);
+    }
+  }
+
+  showStart();
+})();
+</script>
+</body>
+</html>
